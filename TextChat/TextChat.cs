@@ -28,16 +28,16 @@ namespace TextChat
 
             foreach (Player player in Player.List)
             {
-                player.SendConsoleMessage("Вы можете отправлять сообщения через наш текстовый чат на кнопку [Ё].\n Разговаривайте друг с другом!", "red");
+                player.SendConsoleMessage("Вы можете отправлять сообщения через наш текстовый чат на кнопку [Ё].\n Разговаривайте друг с другом!\nПример: .chat Ку!", "red");
             }
         }
         public void OnSendConsole(SendingConsoleEvent ev)
         {
-            foreach (Player player in Player.List)
+         if(ev.Name.ToLower() == "chat" || ev.Name.ToLower() == "чат") foreach (Player player in Player.List)
             {
                 if (!player.IsHost)
                 {
-                    player.SendConsoleMessage($"{ev.Player.Nickname}: {ev.Message}", $"{Color[UnityEngine.Random.Range(0, Color.Count)]}");
+                    player.SendConsoleMessage($"{ev.Player.Nickname}: {string.Join(' ', ev.Args)}", $"{Color[UnityEngine.Random.Range(0, Color.Count)]}");
                     ev.Allowed = false;
                 }
             }
