@@ -1,0 +1,13 @@
+
+*.json
+*.vsidx
+.vs/TextChat/v17/.suo
+*.dll
+*.pdb
+TextChat/obj/Debug/.NETFramework,Version=v4.7.2.AssemblyAttributes.cs
+*.cache
+TextChat/obj/Debug/TextChat.csproj.FileListAbsolute.txt
+TextChat/obj/Release/.NETFramework,Version=v4.7.2.AssemblyAttributes.cs
+TextChat/obj/Release/.NETFramework,Version=v4.8.AssemblyAttributes.cs
+TextChat/obj/Release/TextChat.csproj.CopyComplete
+TextChat/obj/Release/TextChat.csproj.FileListAbsolute.txt
