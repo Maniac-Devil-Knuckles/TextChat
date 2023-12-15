@@ -7,18 +7,17 @@ using Player = Qurre.API.Player;
 using System;
 using System.Linq;
 using Qurre.API.Addons;
-using Qurre.Events.Structs;
 
 
 namespace TextChat
 {
     [PluginInit("TextChat","Maniac Devil Knuckles","1.0.0")]
-    public static class TextChat 
+    public class TextChat 
     {
         public static ChatCommand ChatCommand { get; private set; } 
 
         [PluginEnable]
-        public static void Enable()
+        public void Enable()
         {
             if (!Config.Load())
             {
@@ -30,72 +29,30 @@ namespace TextChat
         }
 
         [PluginDisable]
-        public static void Disable()
+        public void Disable()
         {
-            Config.IsEnabled = false;
             RemoteAdmin.QueryProcessor.DotCommandHandler.UnregisterCommand(ChatCommand);
             ChatCommand = null;
         }
 
         [EventMethod(RoundEvents.Start)]
-        public static void OnRoundStart()
+        public void OnRoundStart()
         {
             if (!Config.IsEnabled) return;
-            if (string.IsNullOrEmpty(Config.SendMessageWhenRoundIsStarted)) return;
             foreach (Player player in Player.List)
             {
                 player.Client.SendConsole(Config.SendMessageWhenRoundIsStarted, "red");
             }
         }
-
-        [EventMethod(ServerEvents.ServerConsoleCommand)]
-        public static void OnConsole(GameConsoleCommandEvent ev)
-        {
-            if (ev.Command != "chat") return;
-            ArraySegment<string> arguments = new ArraySegment<string>(ev.Args);
-            ev.Allowed = false;
-            string response = string.Empty;
-            response = "You did not write";
-            Player ply = ev.Player;
-            if (arguments.Count == 0 || ply.IsHost || ply == null) { }
-            else if (!ply.RoleInfomation.IsAlive)
-            {
-                foreach (Player player in Player.List.Where(p => !p.RoleInfomation.IsAlive))
-                    if (!player.IsHost) player.Client.SendConsole($"{ply.UserInfomation.Nickname}: {string.Join(" ", arguments)}", $"{Color[UnityEngine.Random.Range(0, Color.Count)]}");
-                response = "Sended";
-            }
-            else if (ply.RoleInfomation.IsScp)
-            {
-                foreach (Player player in Player.List.Where(p => p.RoleInfomation.IsScp))
-                    if (!player.IsHost) player.Client.SendConsole($"{ply.UserInfomation.Nickname}: {string.Join(" ", arguments)}", $"{Color[UnityEngine.Random.Range(0, Color.Count)]}");
-                response = "Sended";
-            }
-            else
-            {
-                foreach (Player player in Player.List.Where(p => p.DistanceTo(ply) <= 5f))
-                    if (!player.IsHost) player.Client.SendConsole($"{ply.UserInfomation.Nickname}: {string.Join(" ", arguments)}", $"{Color[UnityEngine.Random.Range(0, Color.Count)]}");
-                response = "Sended";
-            }
-            ev.Reply = response;
-            return;
-        }
-        public static List<string> Color = new List<string>()
-        {
-            "red",
-            "cyan",
-            "yellow",
-            "magenta",
-            "green",
-            "white"
-        };
     }
-
 
     public static class Config
     {
-        public static bool IsEnabled { get; internal set; } = true;
+        public static bool IsEnabled { get; private set; } = true;
 
-        public static string SendMessageWhenRoundIsStarted { get; internal set; } = "Вы можете отправлять сообщения через наш текстовый чат на кнопку [Ё].\n Разговаривайте друг с другом!";
+        public static string SendMessageWhenRoundIsStarted { get; private set; } = "Вы можете отправлять сообщения через наш текстовый чат на кнопку [Ё].\n Разговаривайте друг с другом!";
+
+        public static string NameOfCommand { get; private set; } = "chat";
 
         private static readonly JsonConfig jsonConfig = new JsonConfig("TextChat");
 
@@ -103,17 +60,17 @@ namespace TextChat
         {
             IsEnabled = jsonConfig.SafeGetValue("IsEnabled", IsEnabled);
             SendMessageWhenRoundIsStarted = jsonConfig.SafeGetValue("SendMessageWhenRoundIsStarted", SendMessageWhenRoundIsStarted);
-            JsonConfig.UpdateFile();
+            NameOfCommand = jsonConfig.SafeGetValue("NameOfCommand", NameOfCommand);
             return IsEnabled;
         }
     }
 
     [CommandHandler(typeof(ClientCommandHandler))]
-    public class ChatCommand : ICommand, IHelpProvider
+    public class ChatCommand : ICommand
     {
-        public string Command { get; } = "chat";
+        public string Command => Config.NameOfCommand;
 
-        public string[] Aliases => null;
+        public string[] Aliases => new string[] { };
 
         public string Description => "Chatting with players";
 
@@ -140,8 +97,6 @@ namespace TextChat
             response = "Sended";
             return true;
         }
-
-        public string GetHelp(ArraySegment<string> arguments) => ".chat <message>";
 
         public List<string> Color = new List<string>()
         {
