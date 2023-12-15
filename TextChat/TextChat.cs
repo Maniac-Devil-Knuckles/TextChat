@@ -7,15 +7,13 @@ using Player = Qurre.API.Player;
 using System;
 using System.Linq;
 using Qurre.API.Addons;
-using Qurre.Events.Structs;
-
 
 namespace TextChat
 {
     [PluginInit("TextChat", "Maniac Devil Knuckles", "1.0.0")]
     public static class TextChat
     {
-        public static ChatCommand ChatCommand { get; private set; }
+        public static ICommand ChatCommand { get; private set; }
 
         [PluginEnable]
         public static void Enable()
@@ -47,53 +45,14 @@ namespace TextChat
                 player.Client.SendConsole(Config.SendMessageWhenRoundIsStarted, "red");
             }
         }
-
-        [EventMethod(ServerEvents.ServerConsoleCommand)]
-        public static void OnConsole(GameConsoleCommandEvent ev)
-        {
-            if (ev.Command != "chat") return;
-            ArraySegment<string> arguments = new ArraySegment<string>(ev.Args);
-            ev.Allowed = false;
-            string response = string.Empty;
-            response = "You did not write";
-            Player ply = ev.Player;
-            if (arguments.Count == 0 || ply.IsHost || ply == null) { }
-            else if (!ply.RoleInfomation.IsAlive)
-            {
-                foreach (Player player in Player.List.Where(p => !p.RoleInfomation.IsAlive))
-                    if (!player.IsHost) player.Client.SendConsole($"{ply.UserInfomation.Nickname}: {string.Join(" ", arguments)}", $"{Color[UnityEngine.Random.Range(0, Color.Count)]}");
-                response = "Sended";
-            }
-            else if (ply.RoleInfomation.IsScp)
-            {
-                foreach (Player player in Player.List.Where(p => p.RoleInfomation.IsScp))
-                    if (!player.IsHost) player.Client.SendConsole($"{ply.UserInfomation.Nickname}: {string.Join(" ", arguments)}", $"{Color[UnityEngine.Random.Range(0, Color.Count)]}");
-                response = "Sended";
-            }
-            else
-            {
-                foreach (Player player in Player.List.Where(p => p.DistanceTo(ply) <= 5f))
-                    if (!player.IsHost) player.Client.SendConsole($"{ply.UserInfomation.Nickname}: {string.Join(" ", arguments)}", $"{Color[UnityEngine.Random.Range(0, Color.Count)]}");
-                response = "Sended";
-            }
-            ev.Reply = response;
-            return;
-        }
-        public static List<string> Color = new List<string>()
-        {
-            "red",
-            "cyan",
-            "yellow",
-            "magenta",
-            "green",
-            "white"
-        };
     }
 
 
     public static class Config
     {
         public static bool IsEnabled { get; internal set; } = true;
+
+        public static string NameofCommand { get; private set; } = "chat";
 
         public static string SendMessageWhenRoundIsStarted { get; internal set; } = "Вы можете отправлять сообщения через наш текстовый чат на кнопку [Ё].\n Разговаривайте друг с другом!";
 
@@ -103,6 +62,7 @@ namespace TextChat
         {
             IsEnabled = jsonConfig.SafeGetValue("IsEnabled", IsEnabled);
             SendMessageWhenRoundIsStarted = jsonConfig.SafeGetValue("SendMessageWhenRoundIsStarted", SendMessageWhenRoundIsStarted);
+            NameofCommand = jsonConfig.SafeGetValue("NameOfCommand", NameofCommand, "COmmand chat");
             JsonConfig.UpdateFile();
             return IsEnabled;
         }
@@ -111,7 +71,7 @@ namespace TextChat
     [CommandHandler(typeof(ClientCommandHandler))]
     public class ChatCommand : ICommand, IHelpProvider
     {
-        public string Command { get; } = "chat";
+        public string Command => Config.NameofCommand;
 
         public string[] Aliases => null;
 
@@ -122,7 +82,7 @@ namespace TextChat
             response = "You did not write";
             Player ply = Extensions.GetPlayer(sender as CommandSender);
             if (arguments.Count == 0 || ply.IsHost || ply == null) return false;
-            if (!ply.RoleInfomation.IsAlive)
+            else if (!ply.RoleInfomation.IsAlive)
             {
                 foreach (Player player in Player.List.Where(p => !p.RoleInfomation.IsAlive))
                     if (!player.IsHost) player.Client.SendConsole($"{ply.UserInfomation.Nickname}: {string.Join(" ", arguments)}", $"{Color[UnityEngine.Random.Range(0, Color.Count)]}");
@@ -134,7 +94,7 @@ namespace TextChat
             }
             else
             {
-                foreach (Player player in Player.List.Where(p => p.DistanceTo(ply) <= 5f))
+                foreach (Player player in Player.List.Where(p => p.DistanceTo(ply) <= 10f))
                     if (!player.IsHost) player.Client.SendConsole($"{ply.UserInfomation.Nickname}: {string.Join(" ", arguments)}", $"{Color[UnityEngine.Random.Range(0, Color.Count)]}");
             }
             response = "Sended";
